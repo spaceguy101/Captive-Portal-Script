@@ -3,32 +3,32 @@
 # PLEASE EDIT NEXT LINES TO DEFINE YOUR OWN CONFIGURATION
 
 # Name of the log file
-LOGNAME="kupiki_hotspot.log"
+LOGNAME="busflix_captive_portal.log"
 # Path where the logfile will be stored
 # be sure to add a / at the end of the path
-LOGPATH="/var/log/"
+LOGPATH="/home/pi/log/"
 # Password for user root (MySql/MariaDB not system)
-MYSQL_PASSWORD="pihotspot"
+MYSQL_PASSWORD="nobodyisperfect"
 # Name of the hotspot that will be visible for users/customers
-HOTSPOT_NAME="kupikihotspot"
+HOTSPOT_NAME="busflix"
 # IP of the hotspot
-HOTSPOT_IP="192.168.10.1"
+HOTSPOT_IP="10.1.1.1"
 # Wi-fi code country. Use above link to find yours
 # https://www.cisco.com/c/en/us/td/docs/wireless/wcs/3-2/configuration/guide/wcscfg32/wcscod.html
-WIFI_COUNTRY_CODE="FR"
+WIFI_COUNTRY_CODE="IN"
 # Use HTTPS to connect to web portal
 # Set value to Y or N
 HOTSPOT_HTTPS="N"
 # Network where the hotspot is located
-HOTSPOT_NETWORK="192.168.10.0"
+HOTSPOT_NETWORK="10.1.1.0"
 # Secret word for FreeRadius
-FREERADIUS_SECRETKEY=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
+FREERADIUS_SECRETKEY="nobodyisperfect"
 # WAN interface (the one with Internet - default 'eth0' or long name for Debian 9+)
-WAN_INTERFACE=`ip link show | grep '^[1-9]' | awk -F ':' '{print $2}' | awk '{$1=$1};1' | grep '^e'`
+WAN_INTERFACE="wlan0"
 # LAN interface (the one for the hotspot)
-LAN_INTERFACE="wlan0"
+LAN_INTERFACE="eth0"
 # Wifi driver
-LAN_WIFI_DRIVER="nl80211"
+# LAN_WIFI_DRIVER="nl80211"
 # Install Haserl (required if you want to use the default Coova Portal)
 # Set value to Y or N
 HASERL_INSTALL="N"
@@ -44,7 +44,7 @@ AVAHI_INSTALL="Y"
 DALORADIUS_INSTALL="Y"
 # Enable/Disable Bluetooth
 # Set value to Y or N
-BLUETOOTH_ENABLED="N"
+BLUETOOTH_ENABLED="Y"
 # Enable/Disable fail2ban to protect server from unwanted access
 # Set value to Y or N
 FAIL2BAN_ENABLED="N"
@@ -59,12 +59,12 @@ NETFLOW_ENABLED="Y"
 NETFLOW_LOGS_DAYS="365d"
 # Enable/Disable MAC authentication
 # Set value to Y or N
-MAC_AUTHENTICATION_ENABLED="N"
+MAC_AUTHENTICATION_ENABLED="Y"
 # Password for MAC authentication. Could/Should be changed within the web administration interface
 MAC_AUTHENTICATION_PASSWORD="123456"
-# Install web frontend of Kupiki Hotspot
+# Install web frontend of Busflix Hotspot
 # Set value to Y or N
-INSTALL_KUPIKI_ADMIN=N
+
 # Install Cron job for the hotspot updater. Will be executed every sunday at 8am (system time)
 # Set value to Y or N
 ADD_CRON_UPDATER=Y
@@ -75,10 +75,6 @@ ADD_CRON_UPDATER=Y
 #
 # *************************************
 
-# Current script version
-KUPIKI_VERSION="2.0.6"
-# Updater location
-KUPIKI_UPDATER_ARCHIVE="https://raw.githubusercontent.com/pihomeserver/Kupiki-Hotspot-Script/master/kupiki_updater.sh"
 # Default Portal port
 HOTSPOT_PORT="80"
 HOTSPOT_PROTOCOL="http:\/\/"
@@ -95,9 +91,8 @@ COOVACHILLI_ARCHIVE="https://github.com/coova/coova-chilli.git"
 # Daloradius URL
 DALORADIUS_ARCHIVE="https://github.com/lirantal/daloradius.git"
 # Captive Portal URL
-HOTSPOTPORTAL_ARCHIVE="https://github.com/Kupiki/Kupiki-Hotspot-Portal.git"
-# Kupiki Admin Web UI URL
-KUPIKI_WEBUI_ARCHIVE="https://github.com/Kupiki/Kupiki-Hotspot-Admin-Install.git"
+HOTSPOTPORTAL_ARCHIVE="https://github.com/spaceguy101/Kupiki-Hotspot-Portal.git"
+
 # Haserl URL
 HASERL_URL="http://downloads.sourceforge.net/project/haserl/haserl-devel/haserl-0.9.35.tar.gz"
 # Haserl archive name based on the URL (keep the same version)
@@ -285,8 +280,6 @@ download_all_sources() {
 
   execute_command "cd /usr/src && git clone $COOVACHILLI_ARCHIVE coova-chilli" true "Cloning CoovaChilli project"
 
-  execute_command "cd /usr/src && git clone $KUPIKI_WEBUI_ARCHIVE webui" true "Cloning Kupiki Web UI project"
-
   if [ $HASERL_INSTALL = "Y" ]; then
 
     execute_command "cd /usr/src && rm -f ${HASERL_ARCHIVE}.tar.gz && wget $HASERL_URL" true "Download Haserl"
@@ -307,7 +300,7 @@ secure_system() {
   display_message ":::"
   display_message "::: Configure sysctl kernel parameters"
   display_message ":::"
-cat >> /etc/sysctl.d/kupiki.conf << EOT
+cat >> /etc/sysctl.d/busflix.conf << EOT
 net.ipv4.icmp_echo_ignore_broadcasts = 1
 net.ipv4.icmp_ignore_bogus_error_responses = 1
 net.ipv4.conf.all.accept_redirects = 0
@@ -332,7 +325,7 @@ package_check_install() {
 
 PIHOTSPOT_DEPS_START=( apt-transport-https localepurge git )
 PIHOTSPOT_DEPS_WIFI=( apt-utils firmware-brcm80211 firmware-ralink firmware-realtek )
-PIHOTSPOT_DEPS=( wget build-essential grep whiptail debconf-utils nfdump figlet git fail2ban hostapd php-mysql php-pear php-gd php-db php-fpm libgd2-xpm-dev libpcrecpp0v5 libxpm4 nginx debhelper libssl-dev libcurl4-gnutls-dev mariadb-server freeradius freeradius-mysql gcc make libnl1 libnl-dev pkg-config iptables haserl libjson-c-dev gengetopt devscripts libtool bash-completion autoconf automake )
+PIHOTSPOT_DEPS=( wget build-essential grep whiptail debconf-utils nfdump figlet git fail2ban php-mysql php-pear php-gd php-db php-fpm libgd2-xpm-dev libpcrecpp0v5 libxpm4 nginx debhelper libssl-dev libcurl4-gnutls-dev mariadb-server freeradius freeradius-mysql gcc make libnl1 libnl-dev pkg-config iptables haserl libjson-c-dev gengetopt devscripts libtool bash-completion autoconf automake )
 
 install_dependent_packages() {
 
@@ -372,37 +365,7 @@ valid_ip_address() {
     return $stat
 }
 
-get_updater() {
-  display_message "Checking for updater"
-  if [ -e /etc/kupiki/kupiki_updater.sh ]; then
-    display_message "Updater already exists. It will auto update itself"
-  else
-    display_message "Creating /etc/kupiki"
-    mkdir -p /etc/kupiki && chmod 700 /etc/kupiki
-    check_returned_code $?
-
-    display_message "Updater not found. Downloading latest version of the updater"
-    if ! wget --quiet --output-document="/etc/kupiki/kupiki_updater.sh" $KUPIKI_UPDATER_ARCHIVE ; then
-      display_message "Error while trying to wget new version from ${KUPIKI_UPDATER_ARCHIVE}"
-      exit 1
-    fi
-
-    display_message "Changing access rights"
-    chmod 700 /etc/kupiki/kupiki_updater.sh
-    check_returned_code $?
-  fi
-
-  if [ $ADD_CRON_UPDATER = "Y" ]; then
-    execute_command "grep kupiki_updater /etc/crontab" false "Checking for existing cron job"
-    if [ $COMMAND_RESULT -ne 0 ]; then
-      echo "0 6 * * 0 root /etc/kupiki/kupiki_updater.sh" >> /etc/crontab
-    fi
-  fi
-}
-
 check_root
-
-get_updater
 
 if valid_ip_address 'NETWORK' $HOTSPOT_NETWORK && valid_ip_address 'IP' $HOTSPOT_IP; then
     display_message "Checking HOTSPOT_NETWORK and HOTSPOT_IP parameters : OK"
@@ -521,42 +484,6 @@ notify_package_updates_available
 download_all_sources
 
 execute_command "service mariadb restart" true "Starting MySql service"
-
-execute_command "grep $WAN_INTERFACE /etc/network/interfaces" false "Update interface configuration ($WAN_INTERFACE)"
-if [ $COMMAND_RESULT -ne 0 ]; then
-cat >> /etc/network/interfaces << EOT
-
-auto $WAN_INTERFACE
-allow-hotplug $WAN_INTERFACE
-iface $WAN_INTERFACE inet dhcp
-EOT
-    check_returned_code $?
-fi
-
-execute_command "grep $LAN_INTERFACE /etc/network/interfaces" false "Update interface configuration ($LAN_INTERFACE)"
-if [ $COMMAND_RESULT -ne 0 ]; then
-cat >> /etc/network/interfaces << EOT
-
-auto $LAN_INTERFACE
-allow-hotplug $LAN_INTERFACE
-iface $LAN_INTERFACE inet static
-    address $HOTSPOT_IP
-    netmask 255.255.255.0
-    network $HOTSPOT_NETWORK
-    post-up echo 1 > /proc/sys/net/ipv4/ip_forward
-EOT
-    check_returned_code $?
-fi
-
-execute_command "grep '^country=' /etc/wpa_supplicant/wpa_supplicant.conf" false "Update wifi configuration to add country code"
-if [ $COMMAND_RESULT -ne 0 ]; then
-    display_message "Adding country code to wpa_supplicant"
-    echo "country=$WIFI_COUNTRY_CODE" >> /etc/wpa_supplicant/wpa_supplicant.conf
-    check_returned_code $?
-fi
-
-execute_command "ifup $WAN_INTERFACE" true "Activating the WAN interface"
-execute_command "ifup $LAN_INTERFACE" true "Activating the LAN interface"
 
 if [ $NETFLOW_ENABLED = "Y" ]; then
     display_message "Stopping fprobe service"
@@ -795,23 +722,6 @@ if [ $HASERL_INSTALL = "Y" ]; then
 
 fi
 
-display_message "Creating configuration file for hostapd"
-echo 'DAEMON_CONF="/etc/hostapd/hostapd.conf"' >> /etc/default/hostapd
-check_returned_code $?
-display_message "Configuring hostapd"
-echo "interface=$LAN_INTERFACE
-driver=$LAN_WIFI_DRIVER
-ssid=$HOTSPOT_NAME
-hw_mode=g
-channel=6
-auth_algs=1
-beacon_int=100
-dtim_period=2
-max_num_sta=255
-rts_threshold=2347
-fragm_threshold=2346" > /etc/hostapd/hostapd.conf
-check_returned_code $?
-
 if [ $DALORADIUS_INSTALL = "Y" ]; then
 
     execute_command "cp -Rf /usr/src/daloradius /usr/share/nginx/html/" true "Installing Daloradius in Nginx folder"
@@ -990,39 +900,31 @@ fi
 
 if [ -d "/etc/ssh" ]; then
     display_message "Create banner on login"
-    /usr/bin/figlet -f lean -c "Kupiki Hotspot" | tr ' _/' ' /' > /etc/ssh/kupiki-banner
+    /usr/bin/figlet -f lean -c "Busflix Mediabox" | tr ' _/' ' /' > /etc/ssh/busflix-banner
     check_returned_code $?
 
     display_message "Append script version to the banner"
     echo "
 
-    Kupiki Hotspot - Version $KUPIKI_VERSION - (c) www.pihomeserver.fr
+    Busflix Mediabox - Premium Technology For Premium Buses
 
-    " >> /etc/ssh/kupiki-banner
+    " >> /etc/ssh/busflix-banner
     check_returned_code $?
 
     display_message "Changing banner rights"
-    chmod 644 /etc/ssh/kupiki-banner && chown root:root /etc/ssh/kupiki-banner
+    chmod 644 /etc/ssh/busflix-banner && chown root:root /etc/ssh/busflix-banner
     check_returned_code $?
 
     display_message "Activating the banner for SSH"
-    sed -i "s?^#Banner.*?Banner /etc/ssh/kupiki-banner?g" /etc/ssh/sshd_config
+    sed -i "s?^#Banner.*?Banner /etc/ssh/busflix-banner?g" /etc/ssh/sshd_config
     check_returned_code $?
 
     display_message ""
-    sed -i "s?^Banner.*?Banner /etc/ssh/kupiki-banner?g" /etc/ssh/sshd_config
+    sed -i "s?^Banner.*?Banner /etc/ssh/busflix-banner?g" /etc/ssh/sshd_config
     check_returned_code $?
 
     execute_command "service ssh reload" true "Reload configuration for SSH service"
 fi
-
-display_message "Creating Kupiki Admin folder for the database"
-mkdir -p /var/local/kupiki
-check_returned_code $?
-
-display_message "Changing rights of the folder"
-chmod 777 /var/local/kupiki
-check_returned_code $?
 
 display_message "Updating authentication plugin"
 mariadb -u root -p$MYSQL_PASSWORD << EOT
@@ -1032,27 +934,9 @@ flush privileges;
 EOT
 check_returned_code $?
 
-display_message "Creating backend script folder"
-mkdir -p /etc/kupiki && chmod 700 /etc/kupiki
-
-display_message "Creating version control file"
-echo $KUPIKI_VERSION > /etc/kupiki/version
-
-if [ $INSTALL_KUPIKI_ADMIN = "Y" ]; then
-    display_message "Going to webui folder"
-    cd /usr/src/webui
-    check_returned_code $?
-
-    display_message "Installing the WEB UI"
-    chmod +x install_kupiki_admin.sh && ./install_kupiki_admin.sh 
-    check_returned_code $?
-fi
-
 execute_command "service freeradius start" true "Starting freeradius service"
 
 execute_command "service nginx reload" true "Restarting Nginx"
-
-execute_command "service hostapd restart" true "Restarting hostapd"
 
 execute_command "service chilli start" true "Starting CoovaChilli service"
 
