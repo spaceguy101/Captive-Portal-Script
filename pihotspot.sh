@@ -76,7 +76,7 @@ ADD_CRON_UPDATER=Y
 # *************************************
 
 # Default Portal port
-HOTSPOT_PORT="80"
+HOTSPOT_PORT="80 3000" #3000 for local server
 HOTSPOT_PROTOCOL="http:\/\/"
 # If we need HTTPS support, change port and protocol
 if [ "$HOTSPOT_HTTPS" = "Y" ]; then
@@ -114,6 +114,8 @@ WAN_INTERFACE_IP_MASK=`ifconfig eth0 | grep "inet " | cut -d ' ' -f 13`
 IFS=. read -r i1 i2 i3 i4 <<< "$WAN_INTERFACE_IP"
 IFS=. read -r m1 m2 m3 m4 <<< "$WAN_INTERFACE_IP_MASK"
 WAN_INTERFACE_NETWORK_MASK=`printf "%d.%d.%d.%d\n" "$((i1 & m1))" "$((i2 & m2))" "$((i3 & m3))" "$((i4 & m4))"`
+
+display_message "Make sure you are connected from WAN side"
 
 check_returned_code() {
     RETURNED_CODE=$@
@@ -938,7 +940,6 @@ execute_command "service freeradius start" true "Starting freeradius service"
 
 execute_command "service nginx reload" true "Restarting Nginx"
 
-execute_command "service chilli start" true "Starting CoovaChilli service"
 
 if [ $NETFLOW_ENABLED = "Y" ]; then
     execute_command "service fprobe start" true "Starting fprobe service"
@@ -947,6 +948,10 @@ if [ $NETFLOW_ENABLED = "Y" ]; then
 
     execute_command "service nfdump start" true "Starting nfdump service"
 fi
+
+display_message "SSH may hang if you are not connected from WAN side"
+
+execute_command "service chilli start" true "Starting CoovaChilli service"
 
 execute_command "sleep 15 && ifconfig -a | grep tun0" false "Checking if interface tun0 has been created by CoovaChilli"
 if [ $COMMAND_RESULT -ne 0 ]; then
@@ -957,18 +962,6 @@ if [ $COMMAND_RESULT -ne 0 ]; then
     #exit 1
 fi
 
-# Last message to display once installation ended successfully
-
-display_message ""
-display_message ""
-display_message "Congratulation ! You now have your hotspot ready !"
-display_message ""
-display_message "- Wifi Hotspot available : $HOTSPOT_NAME"
-if [ $AVAHI_INSTALL = "Y" ]; then
-    display_message "- For the user management, please connect to http://$MY_IP/ or http://$HOTSPOT_NAME.local/"
-else
-    display_message "- For the user management, please connect to http://$MY_IP/"
-fi
-display_message "  (login : administrator / password : radius)"
+display_message "Done!"
 
 exit 0
