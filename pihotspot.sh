@@ -6,7 +6,7 @@
 LOGNAME="busflix_captive_portal.log"
 # Path where the logfile will be stored
 # be sure to add a / at the end of the path
-LOGPATH="/home/pi/log/"
+LOGPATH="/home/pi/"
 # Password for user root (MySql/MariaDB not system)
 MYSQL_PASSWORD="nobodyisperfect"
 # Name of the hotspot that will be visible for users/customers
@@ -16,9 +16,7 @@ HOTSPOT_IP="10.1.1.1"
 # Wi-fi code country. Use above link to find yours
 # https://www.cisco.com/c/en/us/td/docs/wireless/wcs/3-2/configuration/guide/wcscfg32/wcscod.html
 WIFI_COUNTRY_CODE="IN"
-# Use HTTPS to connect to web portal
-# Set value to Y or N
-HOTSPOT_HTTPS="N"
+
 # Network where the hotspot is located
 HOTSPOT_NETWORK="10.1.1.0"
 # Secret word for FreeRadius
@@ -27,13 +25,9 @@ FREERADIUS_SECRETKEY="nobodyisperfect"
 WAN_INTERFACE="wlan0"
 # LAN interface (the one for the hotspot)
 LAN_INTERFACE="eth0"
-# Wifi driver
-# LAN_WIFI_DRIVER="nl80211"
-# Install Haserl (required if you want to use the default Coova Portal)
-# Set value to Y or N
-HASERL_INSTALL="N"
+
 # Password used for the generation of the certificate
-CERT_PASSWORD="pihotspot"
+CERT_PASSWORD="nobodyisperfect"
 # Number of days to certify the certificate for (default 2 years)
 CERT_DAYS="730"
 # Make Avahi optional
@@ -41,7 +35,6 @@ CERT_DAYS="730"
 AVAHI_INSTALL="Y"
 # Install Daloradius Portal (compatible with FR2 only in theory)
 # Set value to Y or N
-DALORADIUS_INSTALL="Y"
 # Enable/Disable Bluetooth
 # Set value to Y or N
 BLUETOOTH_ENABLED="Y"
@@ -62,12 +55,7 @@ NETFLOW_LOGS_DAYS="365d"
 MAC_AUTHENTICATION_ENABLED="Y"
 # Password for MAC authentication. Could/Should be changed within the web administration interface
 MAC_AUTHENTICATION_PASSWORD="123456"
-# Install web frontend of Busflix Hotspot
-# Set value to Y or N
 
-# Install Cron job for the hotspot updater. Will be executed every sunday at 8am (system time)
-# Set value to Y or N
-ADD_CRON_UPDATER=Y
 
 # *************************************
 #
@@ -78,25 +66,14 @@ ADD_CRON_UPDATER=Y
 # Default Portal port
 HOTSPOT_PORT="80 3000" #3000 for local server
 HOTSPOT_PROTOCOL="http:\/\/"
-# If we need HTTPS support, change port and protocol
-if [ "$HOTSPOT_HTTPS" = "Y" ]; then
-    HOTSPOT_PORT="443"
-    HOTSPOT_PROTOCOL="https:\/\/"
-fi
+
 
 # Default version of MariaDB
 MARIADB_VERSION='10.1'
 # CoovaChilli GIT URL
 COOVACHILLI_ARCHIVE="https://github.com/coova/coova-chilli.git"
-# Daloradius URL
-DALORADIUS_ARCHIVE="https://github.com/lirantal/daloradius.git"
 # Captive Portal URL
 HOTSPOTPORTAL_ARCHIVE="https://github.com/spaceguy101/Kupiki-Hotspot-Portal.git"
-
-# Haserl URL
-HASERL_URL="http://downloads.sourceforge.net/project/haserl/haserl-devel/haserl-0.9.35.tar.gz"
-# Haserl archive name based on the URL (keep the same version)
-HASERL_ARCHIVE="haserl-0.9.35"
 
 ### PKG Vars ###
 PKG_MANAGER="apt-get"
@@ -282,18 +259,6 @@ download_all_sources() {
 
   execute_command "cd /usr/src && git clone $COOVACHILLI_ARCHIVE coova-chilli" true "Cloning CoovaChilli project"
 
-  if [ $HASERL_INSTALL = "Y" ]; then
-
-    execute_command "cd /usr/src && rm -f ${HASERL_ARCHIVE}.tar.gz && wget $HASERL_URL" true "Download Haserl"
-
-  fi
-
-  if [ $DALORADIUS_INSTALL = "Y" ]; then
-
-    execute_command "cd /usr/src/ && rm -rf daloradius && git clone $DALORADIUS_ARCHIVE daloradius" true "Cloning daloradius project"
-
-  fi
-
   execute_command "cd /usr/src/ && rm -rf portal && git clone $HOTSPOTPORTAL_ARCHIVE portal" true "Cloning Pi Hotspot portal project"
 
 }
@@ -327,7 +292,7 @@ package_check_install() {
 
 PIHOTSPOT_DEPS_START=( apt-transport-https localepurge git )
 PIHOTSPOT_DEPS_WIFI=( apt-utils firmware-brcm80211 firmware-ralink firmware-realtek )
-PIHOTSPOT_DEPS=( wget build-essential grep whiptail debconf-utils nfdump figlet git fail2ban php-mysql php-pear php-gd php-db php-fpm libgd2-xpm-dev libpcrecpp0v5 libxpm4 nginx debhelper libssl-dev libcurl4-gnutls-dev mariadb-server freeradius freeradius-mysql gcc make libnl1 libnl-dev pkg-config iptables haserl libjson-c-dev gengetopt devscripts libtool bash-completion autoconf automake )
+PIHOTSPOT_DEPS=( libusb-1.0-0 libusb-1.0-0-dev libbluetooth-dev wget build-essential grep whiptail debconf-utils nfdump figlet git fail2ban php-mysql php-pear php-gd php-db php-fpm libgd2-xpm-dev libpcrecpp0v5 libxpm4 nginx debhelper libssl-dev libcurl4-gnutls-dev mariadb-server freeradius freeradius-mysql gcc make libnl1 libnl-dev pkg-config iptables haserl libjson-c-dev gengetopt devscripts libtool bash-completion autoconf automake )
 
 install_dependent_packages() {
 
@@ -423,7 +388,7 @@ fi
 
 execute_command "dpkg --purge --force-all coova-chilli" true "Remove old configuration of Coova Chilli"
 execute_command "dpkg --purge --force-all haserl" true "Remove old configuration of haserl"
-execute_command "dpkg --purge --force-all hostapd" true "Remove old configuration of hostapd"
+
 
 execute_command "/sbin/lsmod | grep tun" false "Checking for tun module"
 if [ $COMMAND_RESULT -ne 0 ]; then
@@ -712,112 +677,13 @@ fi
 
 execute_command "update-rc.d chilli start 99 2 3 4 5 . stop 20 0 1 6 ." true "Activating CoovaChilli on boot"
 
-if [ $HASERL_INSTALL = "Y" ]; then
-
-    execute_command "cd /usr/src && tar zxvf ${HASERL_ARCHIVE}.tar.gz" true "Uncompressing Haserl archive"
-
-    execute_command "cd /usr/src/$HASERL_ARCHIVE && ./configure && make && make install" true "Compiling and installing Haserl"
-
-    display_message "Updating chilli configuration"
-    sed -i '/haserl=/s/^haserl=.*$/haserl=\/usr\/local\/bin\/haserl/g' /etc/chilli/wwwsh
-    check_returned_code $?
-
-fi
-
-if [ $DALORADIUS_INSTALL = "Y" ]; then
-
-    execute_command "cp -Rf /usr/src/daloradius /usr/share/nginx/html/" true "Installing Daloradius in Nginx folder"
-
-    display_message "Loading daloradius configuration into MySql"
-    mariadb -u root -p$MYSQL_PASSWORD radius < /usr/share/nginx/html/daloradius/contrib/db/fr2-mysql-daloradius-and-freeradius.sql
-    check_returned_code $?
-
-    display_message "Drop freeradius tables created by Daloradius to reload the Freeradius 3.0 version"
-    echo 'drop table if exists radius.radacct, radius.radcheck, radius.radgroupcheck, radius.radgroupreply, radius.radreply, radius.radusergroup, radius.radpostauth, radius.nas ;' | mariadb -u root -p$MYSQL_PASSWORD
-    check_returned_code $?
-
-    display_message "Reload original Freeradius schema"
-    mariadb -u root -p$MYSQL_PASSWORD radius < /etc/freeradius/3.0/mods-config/sql/main/mysql/schema.sql
-    check_returned_code $?
-
-    display_message "Creating users privileges for localhost"
-    echo "GRANT ALL ON radius.* to 'radius'@'localhost';" > /tmp/grant.sql
-    check_returned_code $?
-
-    display_message "Granting users privileges"
-    mysql -u root -p$MYSQL_PASSWORD < /tmp/grant.sql
-    check_returned_code $?
-
-    display_message "Configuring daloradius DB user name"
-    sed -i "s/\$configValues\['CONFIG_DB_USER'\] = 'root';/\$configValues\['CONFIG_DB_USER'\] = 'radius';/g" /usr/share/nginx/html/daloradius/library/daloradius.conf.php
-    check_returned_code $?
-    display_message "Configuring daloradius DB user password"
-    sed -i "s/\$configValues\['CONFIG_DB_PASS'\] = '';/\$configValues\['CONFIG_DB_PASS'\] = 'radpass';/g" /usr/share/nginx/html/daloradius/library/daloradius.conf.php
-    check_returned_code $?
-
-    display_message "Building NGINX configuration (default listen port : 80)"
-    echo '
-    server {
-            listen 80 default_server;
-            listen [::]:80 default_server;
-
-            root /usr/share/nginx/html/daloradius;
-
-            index index.html index.htm index.php;
-
-            server_name _;
-
-            location / {
-                try_files $uri $uri/ =404;
-            }
-
-            location ~ \.php$ {
-                include snippets/fastcgi-php.conf;
-                fastcgi_pass unix:/var/run/php/php7.0-fpm.sock;
-            }
-    }' > /etc/nginx/sites-available/default
-    check_returned_code $?
-
-fi
-
 display_message "Building NGINX configuration for the portal (default listen port : $HOTSPOT_PORT)"
-if [ $HOTSPOT_HTTPS = "Y" ]; then
-    display_message "Creating folder for Nginx certificates"
-    mkdir /etc/nginx/certs/
-    check_returned_code $?
 
-    display_message "Generating self-signed certificate"
-    openssl req -x509 -nodes -days $CERT_DAYS -newkey rsa:2048 -keyout /etc/nginx/certs/$HOTSPOT_NAME.key -out /etc/nginx/certs/$HOTSPOT_NAME.crt -subj '/CN=$HOTSPOT_NAME'
-    check_returned_code $?
-
-    echo "
-server {
-       	listen $HOTSPOT_IP:$HOTSPOT_PORT ssl default_server;
-
-        ssl_certificate /etc/nginx/certs/$HOTSPOT_NAME.crt;
-	    ssl_certificate_key /etc/nginx/certs/$HOTSPOT_NAME.key;
-
-       	root /usr/share/nginx/portal;
-
-       	index index.html;
-
-       	server_name _;
-
-       	location / {
-       		try_files \$uri \$uri/ =404;
-       	}
-
-       	location ~ \.php\$ {
-       		include snippets/fastcgi-php.conf;
-       		fastcgi_pass unix:/var/run/php/php7.0-fpm.sock;
-       	}
-}" > /etc/nginx/sites-available/portal
-else
-    echo "
+echo "
 server {
        	listen $HOTSPOT_IP:$HOTSPOT_PORT default_server;
 
-       	root /usr/share/nginx/portal;
+       	root /home/pi/busflix-pro/web-portal;
 
        	index index.html;
 
@@ -832,15 +698,13 @@ server {
        		fastcgi_pass unix:/var/run/php/php7.0-fpm.sock;
        	}
 }" > /etc/nginx/sites-available/portal
-fi
+
 check_returned_code $?
 
 execute_command "ln -sfT /etc/nginx/sites-available/portal /etc/nginx/sites-enabled/portal" true "Activating portal website"
 
-execute_command "cp -Rf /usr/src/portal /usr/share/nginx/" true "Installing the portal in Nginx folder"
-
 display_message "Updating Captive Portal file"
-sed -i "/XXXXXX/s/XXXXXX/$HOTSPOT_IP/g" /usr/share/nginx/portal/js/configuration.json
+sed -i "/XXXXXX/s/XXXXXX/$HOTSPOT_IP/g" /home/pi/busflix-pro/web-portal/js/configuration.json
 check_returned_code $?
 
 execute_command "nginx -t" true "Checking Nginx configuration file"
@@ -902,7 +766,7 @@ fi
 
 if [ -d "/etc/ssh" ]; then
     display_message "Create banner on login"
-    /usr/bin/figlet -f lean -c "Busflix Mediabox" | tr ' _/' ' /' > /etc/ssh/busflix-banner
+    /usr/bin/figlet -f lean -c "Busflix" | tr ' _/' ' /' > /etc/ssh/busflix-banner
     check_returned_code $?
 
     display_message "Append script version to the banner"
